@@ -1,3 +1,3 @@
 ﻿
-using var game = new RubedoPong.Game1();
+using var game = new RubedoPong.Pong();
 game.Run();
