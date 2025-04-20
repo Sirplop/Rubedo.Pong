@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Rubedo;
 using Rubedo.Components;
@@ -20,19 +21,38 @@ public class PongState : GameState
     public int leftScore;
     public int rightScore;
 
+    public int scoreToWin = 5;
+
     private Vector2 leftStart;
     private Vector2 rightStart;
 
-    private bool playerSendsBall = true;
+    private bool playerSendsBall;
+    private float roundCooldown;
+    private bool roundStarted;
+    private bool gameWon;
+
+    private SoundEffect score;
+    private SoundEffect oppScore;
 
     public PongState(StateManager sm, InputManager ih) : base(sm, ih)
     {
         _name = "PongState";
     }
 
+    public override void LoadContent()
+    {
+        base.LoadContent();
+        score = AssetManager.LoadSoundFx("score");
+        oppScore = AssetManager.LoadSoundFx("opponent_score");
+    }
+
     public override void Enter()
     {
         base.Enter();
+
+        playerSendsBall = true;
+        roundStarted = true;
+        gameWon = false;
 
         Pong.Instance.Camera.GetExtents(out float left, out float right, out float top, out float bottom);
         rightStart = new Vector2(right - 24, 0);
@@ -82,6 +102,19 @@ public class PongState : GameState
         Add(scoreEnt);
     }
 
+    public override void Exit()
+    {
+        base.Exit();
+
+        leftPlayer = null;
+        rightPlayer = null;
+        ball = null;
+        leftScoreText = null;
+        rightScoreText = null;
+        leftScore = 0;
+        rightScore = 0;
+    }
+
     public void TryCollideWithPaddle(Ball ball)
     {
         Vector2 pos = ball.Transform.Position;
@@ -105,34 +138,95 @@ public class PongState : GameState
     public void ScoreAndReset(bool leftOrRight)
     {
         if (leftOrRight)
+        {
             rightScore++;
+            score.Play();
+        }
         else
+        {
             leftScore++;
+            oppScore.Play();
+        }
 
         ball.Transform.Position = Vector2.Zero;
         ball.velocity = Vector2.Zero;
-        leftPlayer.Transform.Position = leftStart;
-        rightPlayer.Transform.Position = rightStart;
-        leftPlayer.velocity = 0;
-        rightPlayer.velocity = 0;
 
-        //send the ball immediately if right player won
-        if (leftOrRight)
-            ball.Send(false);
-        else
-            playerSendsBall = true;
+        ball.active = false;
+        ball.sprite.visible = false;
+
+        playerSendsBall = !leftOrRight;
+        roundCooldown = 2;
+        roundStarted = false;
+
+        if (leftScore >= scoreToWin)
+        { //left player wins
+            roundCooldown = 4;
+            SpriteFont font = AssetManager.LoadFont("consolas");
+            Text winText = new Text(font, "Left Player Wins!", Color.Red);
+            winText.SetAlignment(Text.HorizontalAlignment.Center);
+            winText.textSize = 2.2f;
+            Entity scoreEnt = new Entity() { winText };
+            Add(scoreEnt);
+            gameWon = true;
+        }
+        else if (rightScore >= scoreToWin)
+        { //right player wins.
+            roundCooldown = 4;
+            SpriteFont font = AssetManager.LoadFont("consolas");
+            Text winText = new Text(font, "Right Player Wins!", Color.Green);
+            winText.SetAlignment(Text.HorizontalAlignment.Center);
+            winText.textSize = 2.2f;
+            Entity scoreEnt = new Entity() { winText };
+            Add(scoreEnt);
+            gameWon = true;
+        }
     }
 
     public override void Update()
     {
         base.Update();
 
-        if (playerSendsBall && Pong.Input.KeyDown(Microsoft.Xna.Framework.Input.Keys.Space))
-        {
-            ball.Send(true);
-        }
-
         leftScoreText.SetText(leftScore.ToString());
         rightScoreText.SetText(rightScore.ToString());
+
+        if (Pong.Input.KeyPressed(Microsoft.Xna.Framework.Input.Keys.Escape))
+        {
+            Pong.Instance.Exit();
+            return;
+        }
+
+        if (gameWon && roundCooldown > 0)
+        {
+            roundCooldown -= Pong.DeltaTime;
+            if (roundCooldown <= 0)
+            {
+                this.stateManager.SwitchState("MenuState");
+            }
+            return;
+        }
+
+        if (roundCooldown > 0)
+        {
+            roundCooldown -= Pong.DeltaTime;
+            if (roundCooldown <= 0)
+            {
+                roundCooldown = 0;
+                roundStarted = true;
+                ball.sprite.visible = true;
+                ball.active = true;
+                leftPlayer.Transform.Position = leftStart;
+                rightPlayer.Transform.Position = rightStart;
+                leftPlayer.velocity = 0;
+                rightPlayer.velocity = 0;
+                if (!playerSendsBall)
+                    ball.Send(false);
+            }
+        }
+
+        if (roundStarted && playerSendsBall && Pong.Input.KeyPressed(Microsoft.Xna.Framework.Input.Keys.Space))
+        {
+            ball.Send(true);
+            playerSendsBall = false;
+        }
     }
 }

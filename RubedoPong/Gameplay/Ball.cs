@@ -1,4 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
+using Rubedo;
 using Rubedo.Components;
 using Rubedo.Lib;
 using Rubedo.Object;
@@ -10,7 +12,7 @@ namespace RubedoPong.Gameplay;
 /// </summary>
 public class Ball : Component
 {
-    Sprite sprite;
+    public Sprite sprite;
     float left;
     float right;
     float top;
@@ -18,7 +20,14 @@ public class Ball : Component
 
     public Vector2 velocity;
 
-    public Ball() : base(true, true) { }
+    private SoundEffect bounce;
+    private SoundEffect send;
+
+    public Ball() : base(true, true) 
+    {
+        bounce = AssetManager.LoadSoundFx("bounce");
+        send = AssetManager.LoadSoundFx("send");
+    }
 
     public override void Added(Entity entity)
     {
@@ -45,11 +54,13 @@ public class Ball : Component
         {
             velocity.Y = -velocity.Y;
             pos.Y = top;
+            bounce.Play(1, Random.Range(0.75f, 1f), 0);
         }
         else if (pos.Y <= bottom)
         {
             velocity.Y = -velocity.Y;
             pos.Y = bottom;
+            bounce.Play(1, Random.Range(0.75f, 1f), 0);
         }
 
         if (pos.X >= right)
@@ -74,6 +85,7 @@ public class Ball : Component
         int sign = -System.MathF.Sign(velocity.X);
         velocity.X = sign * System.MathF.Min(System.MathF.Abs(velocity.X * 1.3f), 250);
         velocity.Y += addYVelocity;
+        bounce.Play(1, Random.Range(0.75f, 1f), 0);
     }
 
     /// <summary>
@@ -83,5 +95,6 @@ public class Ball : Component
     {
         velocity.X = leftOrRight ? -100 : 100;
         velocity.Y = Random.Range(-100f, 100f);
+        send.Play();
     }
 }

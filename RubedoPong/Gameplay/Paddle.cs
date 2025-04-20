@@ -62,11 +62,14 @@ public class Paddle : Component
         }
         else
         {
-            Y = moveRate * Pong.DeltaTime;
-            Vector2 ballPos = target.Transform.Position;
-            if (pos.Y >= ballPos.Y)
-                Y = -Y;
-            velocity += Y;
+            if (target.active)
+            {
+                Y = moveRate * Pong.DeltaTime;
+                Vector2 ballPos = target.Transform.Position;
+                if (pos.Y >= ballPos.Y)
+                    Y = -Y;
+                velocity += Y;
+            }
         }
         velocity *= 0.99f;
         Y = Rubedo.Lib.Math.Clamp(pos.Y + velocity, bottom + halfHeight, top - halfHeight);

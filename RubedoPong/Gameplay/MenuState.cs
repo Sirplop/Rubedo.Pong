@@ -32,17 +32,19 @@ public class MenuState : GameState
         SpriteFont font = AssetManager.LoadFont("consolas");
         Text text1 = new Text(font, "Play", Color.White, true, true);
         Text text2 = new Text(font, "Quit", Color.White, true, true);
-        text1.textSize = 1;
-        text2.textSize = 1;
         text1.SetAlignment(Text.HorizontalAlignment.Center, Text.VerticalAlignment.Center);
         text2.SetAlignment(Text.HorizontalAlignment.Center, Text.VerticalAlignment.Center);
         text1.SetShadow(2, Color.Black);
         text2.SetShadow(2, Color.Black);
 
-        Text titleText = new Text(font, "OMG,PONG", Color.White, true, true);
+        Text titleText = new Text(font, "RUBEDO PONG", Color.White, true, true);
         titleText.textSize = 3;
         titleText.SetAlignment(Text.HorizontalAlignment.Center, Text.VerticalAlignment.Center);
         titleText.SetShadow(5, Color.Gray);
+
+        Text subtitleText = new Text(font, "W/S to move, Space to start. Score 5 to win.", Color.White, true, true);
+        subtitleText.SetAlignment(Text.HorizontalAlignment.Center, Text.VerticalAlignment.Center);
+        subtitleText.textSize = 0.9f;
 
         Entity button1 = new Entity()
         {
@@ -58,10 +60,15 @@ public class MenuState : GameState
         {
             titleText
         };
+        Entity subtitle = new Entity(title.transform.Position - new Vector2(0, 60))
+        {
+            subtitleText
+        };
 
         Add(button1);
         Add(button2);
         Add(title);
+        Add(subtitle);
 
         Vector2 buttMin = button1.transform.Position - buttonSprite1.HalfWH;
         Vector2 buttMax = button1.transform.Position + buttonSprite1.HalfWH;
