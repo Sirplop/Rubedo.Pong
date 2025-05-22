@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Audio;
 using Rubedo;
 using Rubedo.Components;
+using Rubedo.Internal.Assets;
 using Rubedo.Lib;
 using Rubedo.Object;
 
@@ -25,8 +26,8 @@ public class Ball : Component
 
     public Ball() : base(true, true) 
     {
-        bounce = AssetManager.LoadSoundFx("bounce");
-        send = AssetManager.LoadSoundFx("send");
+        bounce = AssetManager.LoadSoundEffect("bounce");
+        send = AssetManager.LoadSoundEffect("send");
     }
 
     public override void Added(Entity entity)

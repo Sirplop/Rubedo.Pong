@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Rubedo.Components;
+using Rubedo.Input.Conditions;
 using Rubedo.Object;
 
 namespace RubedoPong.Gameplay;
@@ -22,6 +23,16 @@ public class Paddle : Component
     public float velocity = 0;
 
     private Ball target;
+
+
+    private readonly AnyCondition upInput = new AnyCondition(
+            new KeyCondition(Keys.Up),
+            new KeyCondition(Keys.W)
+        );
+    private readonly AnyCondition downInput = new AnyCondition(
+            new KeyCondition(Keys.Down),
+            new KeyCondition(Keys.S)
+        );
 
     public Paddle(Ball ball) : base(true, true) 
     {
@@ -48,8 +59,8 @@ public class Paddle : Component
         float Y;
         if (isPlayer)
         {
-            bool downPressed = Pong.Input.KeyDown(Keys.S);
-            bool upPressed = Pong.Input.KeyDown(Keys.W);
+            bool downPressed = downInput.Pressed() || downInput.Held();
+            bool upPressed = upInput.Pressed() || upInput.Held();
             if (downPressed && !upPressed)
             {
                 velocity -= moveRate * Pong.DeltaTime;

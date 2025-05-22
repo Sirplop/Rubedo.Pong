@@ -1,9 +1,13 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
-using Microsoft.Xna.Framework.Graphics;
 using Rubedo;
 using Rubedo.Components;
+using Rubedo.Input.Conditions;
+using Rubedo.Internal.Assets;
 using Rubedo.Object;
+using Rubedo.UI;
+using Rubedo.UI.Text;
 
 namespace RubedoPong.Gameplay;
 
@@ -15,8 +19,8 @@ public class PongState : GameState
     Paddle leftPlayer;
     Paddle rightPlayer;
     Ball ball;
-    Text leftScoreText;
-    Text rightScoreText;
+    Label leftScoreText;
+    Label rightScoreText;
 
     public int leftScore;
     public int rightScore;
@@ -34,7 +38,10 @@ public class PongState : GameState
     private SoundEffect score;
     private SoundEffect oppScore;
 
-    public PongState(StateManager sm, InputManager ih) : base(sm, ih)
+    private readonly KeyCondition quitInput = new KeyCondition(Microsoft.Xna.Framework.Input.Keys.Escape);
+    private readonly KeyCondition sendInput = new KeyCondition(Microsoft.Xna.Framework.Input.Keys.Space);
+
+    public PongState(StateManager sm) : base(sm)
     {
         _name = "PongState";
     }
@@ -42,8 +49,8 @@ public class PongState : GameState
     public override void LoadContent()
     {
         base.LoadContent();
-        score = AssetManager.LoadSoundFx("score");
-        oppScore = AssetManager.LoadSoundFx("opponent_score");
+        score = AssetManager.LoadSoundEffect("score");
+        oppScore = AssetManager.LoadSoundEffect("opponent_score");
     }
 
     public override void Enter()
@@ -91,15 +98,18 @@ public class PongState : GameState
         };
         Add(paddleEnt);
 
-        SpriteFont font = AssetManager.LoadFont("consolas");
-        leftScoreText = new Text(font, "0", Color.White);
-        leftScoreText.SetAlignment(Text.HorizontalAlignment.Center);
-        rightScoreText = new Text(font, "0", Color.White);
-        rightScoreText.SetAlignment(Text.HorizontalAlignment.Center);
-        Entity scoreEnt = new Entity(new Vector2(left * 0.5f, top - 24)) { leftScoreText };
-        Add(scoreEnt);
-        scoreEnt = new Entity(new Vector2(right * 0.5f, top - 24)) { rightScoreText };
-        Add(scoreEnt);
+        FontSystem font = AssetManager.GetFontSystem("default");
+        leftScoreText = new Label(font, "0", Color.White, 36);
+        leftScoreText.horizontalAlignment = Label.HorizontalAlignment.Center;
+        leftScoreText.Anchor = Anchor.Top;
+        leftScoreText.SetScreenOffset(new Vector2(0.25f, 0.02f));
+        GUI.Root.AddChild(leftScoreText);
+
+        rightScoreText = new Label(font, "0", Color.White, 36);
+        rightScoreText.horizontalAlignment = Label.HorizontalAlignment.Center;
+        rightScoreText.Anchor = Anchor.Top;
+        rightScoreText.SetScreenOffset(new Vector2(0.75f, 0.02f));
+        GUI.Root.AddChild(rightScoreText);
     }
 
     public override void Exit()
@@ -161,23 +171,23 @@ public class PongState : GameState
         if (leftScore >= scoreToWin)
         { //left player wins
             roundCooldown = 4;
-            SpriteFont font = AssetManager.LoadFont("consolas");
-            Text winText = new Text(font, "Left Player Wins!", Color.Red);
-            winText.SetAlignment(Text.HorizontalAlignment.Center);
-            winText.textSize = 2.2f;
-            Entity scoreEnt = new Entity() { winText };
-            Add(scoreEnt);
+            FontSystem font = AssetManager.GetFontSystem("default");
+            Label winText = new Label(font, "Left Player Wins!", Color.Red, 56);
+            winText.horizontalAlignment = Label.HorizontalAlignment.Center;
+            winText.Anchor = Anchor.Center;
+            GUI.Root.AddChild(winText);
+
             gameWon = true;
         }
         else if (rightScore >= scoreToWin)
         { //right player wins.
             roundCooldown = 4;
-            SpriteFont font = AssetManager.LoadFont("consolas");
-            Text winText = new Text(font, "Right Player Wins!", Color.Green);
-            winText.SetAlignment(Text.HorizontalAlignment.Center);
-            winText.textSize = 2.2f;
-            Entity scoreEnt = new Entity() { winText };
-            Add(scoreEnt);
+            FontSystem font = AssetManager.GetFontSystem("default");
+            Label winText = new Label(font, "Right Player Wins!", Color.Green, 56);
+            winText.horizontalAlignment = Label.HorizontalAlignment.Center;
+            winText.Anchor = Anchor.Center;
+            GUI.Root.AddChild(winText);
+
             gameWon = true;
         }
     }
@@ -186,10 +196,10 @@ public class PongState : GameState
     {
         base.Update();
 
-        leftScoreText.SetText(leftScore.ToString());
-        rightScoreText.SetText(rightScore.ToString());
+        leftScoreText.Text = leftScore.ToString();
+        rightScoreText.Text = rightScore.ToString();
 
-        if (Pong.Input.KeyPressed(Microsoft.Xna.Framework.Input.Keys.Escape))
+        if (quitInput.Pressed())
         {
             Pong.Instance.Exit();
             return;
@@ -223,7 +233,7 @@ public class PongState : GameState
             }
         }
 
-        if (roundStarted && playerSendsBall && Pong.Input.KeyPressed(Microsoft.Xna.Framework.Input.Keys.Space))
+        if (roundStarted && playerSendsBall && sendInput.Pressed())
         {
             ball.Send(true);
             playerSendsBall = false;

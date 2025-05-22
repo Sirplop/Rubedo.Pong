@@ -13,8 +13,8 @@ public class Pong : RubedoEngine
     protected override void LoadContent()
     {
         base.LoadContent();
-        _stateManager.AddState(new MenuState(_stateManager, _inputManager));
-        _stateManager.AddState(new PongState(_stateManager, _inputManager));
+        _stateManager.AddState(new MenuState(_stateManager));
+        _stateManager.AddState(new PongState(_stateManager));
 
         _stateManager.SwitchState("MenuState");
     }

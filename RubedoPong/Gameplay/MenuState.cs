@@ -1,10 +1,14 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using PhysicsEngine2D;
 using Rubedo;
 using Rubedo.Components;
+using Rubedo.Internal.Assets;
 using Rubedo.Object;
-using System.Diagnostics;
+using Rubedo.UI;
+using Rubedo.UI.Graphics;
+using Rubedo.UI.Input;
+using Rubedo.UI.Layout;
+using Rubedo.UI.Text;
 
 namespace RubedoPong.Gameplay;
 
@@ -13,85 +17,57 @@ namespace RubedoPong.Gameplay;
 /// </summary>
 public class MenuState : GameState
 {
-    AABB button1AABB;
-    AABB button2AABB;
-
-    public MenuState(StateManager sm, InputManager ih) : base(sm, ih)
+    public MenuState(StateManager sm) : base(sm)
     {
         _name = "MenuState";
+    }
+
+    public override void LoadContent()
+    {
+        base.LoadContent();
+        //AssetManager.CreateNewFontSystem("default", "fonts/Consolas.ttf");
+        AssetManager.CreateNewFontSystem("default", "fonts/DroidSans.ttf", "fonts/DroidSansJapanese.ttf", "fonts/Symbola-Emoji.ttf");
     }
 
     public override void Enter()
     {
         base.Enter();
 
-        Texture2D button = AssetManager.LoadTexture("button");
-        Sprite buttonSprite1 = new Sprite(button);
-        Sprite buttonSprite2 = new Sprite(button);
+        //button layout group.
+        Vertical vert = new Vertical();
+        vert.Anchor = Rubedo.UI.Anchor.Center;
 
-        SpriteFont font = AssetManager.LoadFont("consolas");
-        Text text1 = new Text(font, "Play", Color.White, true, true);
-        Text text2 = new Text(font, "Quit", Color.White, true, true);
-        text1.SetAlignment(Text.HorizontalAlignment.Center, Text.VerticalAlignment.Center);
-        text2.SetAlignment(Text.HorizontalAlignment.Center, Text.VerticalAlignment.Center);
-        text1.SetShadow(2, Color.Black);
-        text2.SetShadow(2, Color.Black);
+        Label titleText = new Label(AssetManager.GetFontSystem("default"), "RUBEDO PONG", Color.White, 72);
+        titleText.Anchor = Anchor.Top;
+        vert.AddChild(titleText);
 
-        Text titleText = new Text(font, "RUBEDO PONG", Color.White, true, true);
-        titleText.textSize = 3;
-        titleText.SetAlignment(Text.HorizontalAlignment.Center, Text.VerticalAlignment.Center);
-        titleText.SetShadow(5, Color.Gray);
+        Panel spacer = new Panel(0, 75);
+        vert.AddChild(spacer);
 
-        Text subtitleText = new Text(font, "W/S to move, Space to start. Score 5 to win.", Color.White, true, true);
-        subtitleText.SetAlignment(Text.HorizontalAlignment.Center, Text.VerticalAlignment.Center);
-        subtitleText.textSize = 0.9f;
+        Button startButton = new Button();
+        Image startImage = new Image(AssetManager.LoadTexture("button"), Color.White);
+        startButton.AddChild(new SelectableTintSet(startImage));
+        startButton.AddChild(startImage);
+        Label startText = new Label(AssetManager.GetFontSystem("default"), "Play", Color.Black, 24);
+        startText.Anchor = Anchor.Center;
+        startImage.AddChild(startText);
+        startButton.OnReleased += (b) => stateManager.SwitchState("PongState");
+        startButton.Anchor = Anchor.Center;
+        vert.AddChild(startButton);
 
-        Entity button1 = new Entity()
-        {
-            buttonSprite1,
-            text1
-        };
-        Entity button2 = new Entity(button1.transform.Position - new Vector2(0, 72))
-        {
-            buttonSprite2,
-            text2
-        };
-        Entity title = new Entity(button1.transform.Position + new Vector2(0, 150))
-        {
-            titleText
-        };
-        Entity subtitle = new Entity(title.transform.Position - new Vector2(0, 60))
-        {
-            subtitleText
-        };
+        Button quitButton = new Button();
+        Image quitImage = new Image(AssetManager.LoadTexture("button"));
+        quitButton.AddChild(new SelectableTintSet(quitImage));
+        quitButton.AddChild(quitImage);
+        Label quitText = new Label(AssetManager.GetFontSystem("default"), "Quit", Color.Black, 24);
+        quitText.Anchor = Anchor.Center;
+        quitImage.AddChild(quitText);
+        quitButton.OnReleased += (b) => Pong.Instance.Exit();
+        quitButton.Anchor = Anchor.Center;
+        vert.AddChild(quitButton);
 
-        Add(button1);
-        Add(button2);
-        Add(title);
-        Add(subtitle);
+        vert.childPadding = 10;
 
-        Vector2 buttMin = button1.transform.Position - buttonSprite1.HalfWH;
-        Vector2 buttMax = button1.transform.Position + buttonSprite1.HalfWH;
-        button1AABB = new AABB(buttMin, buttMax);
-        buttMin = button2.transform.Position - buttonSprite2.HalfWH;
-        buttMax = button2.transform.Position + buttonSprite2.HalfWH;
-        button2AABB = new AABB(buttMin, buttMax);
-    }
-
-    public override void Update()
-    {
-        base.Update();
-        if (inputManager.MousePressed(InputManager.MouseButtons.Mouse1))
-        {
-            Vector2 mousePos = inputManager.MouseWorldPosition();
-            if (button1AABB.Contains(ref mousePos))
-            {
-                stateManager.SwitchState("PongState");
-            }
-            else if (button2AABB.Contains(ref mousePos))
-            {
-                Pong.Instance.Exit();
-            }
-        }
+        GUI.Root.AddChild(vert);
     }
 }
