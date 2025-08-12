@@ -18,4 +18,10 @@ public class Pong : RubedoEngine
 
         _stateManager.SwitchState("MenuState");
     }
+
+    protected override void Draw(GameTime gameTime)
+    {
+        GraphicsDevice.Clear(Color.Black);
+        base.Draw(gameTime);
+    }
 }

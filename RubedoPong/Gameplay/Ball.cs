@@ -1,8 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Rubedo;
+using Rubedo.Audio;
 using Rubedo.Components;
-using Rubedo.Internal.Assets;
 using Rubedo.Lib;
 using Rubedo.Object;
 
@@ -21,13 +21,13 @@ public class Ball : Component
 
     public Vector2 velocity;
 
-    private SoundEffect bounce;
-    private SoundEffect send;
+    private SoundPlayer bounce;
+    private SoundPlayer send;
 
-    public Ball() : base(true, true) 
+    public Ball()
     {
-        bounce = AssetManager.LoadSoundEffect("bounce");
-        send = AssetManager.LoadSoundEffect("send");
+        bounce = new SoundPlayer("bounce", (int)DefaultMixers.Type.Effect, 2, RubedoEngine.Audio).SetRandomInfo(1f, 0.75f, 1f);
+        send = new SoundPlayer("send", (int)DefaultMixers.Type.Effect, 1, RubedoEngine.Audio).SetRandomInfo(1f, 0.9f, 1.1f);
     }
 
     public override void Added(Entity entity)
@@ -36,8 +36,13 @@ public class Ball : Component
 
         sprite = new Sprite("ball");
         Entity.Add(sprite);
+    }
 
-        Pong.Instance.Camera.GetExtents(out left, out right, out top, out bottom);
+    public override void EntityAdded(GameState state)
+    {
+        base.EntityAdded(state);
+
+        state.MainCamera.ViewRect.GetExtents(out left, out right, out top, out bottom);
         left += sprite.Width * 0.5f;
         right -= sprite.Width * 0.5f;
         bottom += sprite.Height * 0.5f;
@@ -49,19 +54,19 @@ public class Ball : Component
         base.Update();
 
         Vector2 pos = Transform.Position;
-        MathV.MulAdd(ref pos, ref velocity, Pong.DeltaTime, out pos);
+        MathV.MulAdd(ref pos, ref velocity, Time.DeltaTime, out pos);
 
         if (pos.Y >= top)
         {
             velocity.Y = -velocity.Y;
             pos.Y = top;
-            bounce.Play(1, Random.Range(0.75f, 1f), 0);
+            bounce.Play();
         }
         else if (pos.Y <= bottom)
         {
             velocity.Y = -velocity.Y;
             pos.Y = bottom;
-            bounce.Play(1, Random.Range(0.75f, 1f), 0);
+            bounce.Play();
         }
 
         if (pos.X >= right)
@@ -86,7 +91,7 @@ public class Ball : Component
         int sign = -System.MathF.Sign(velocity.X);
         velocity.X = sign * System.MathF.Min(System.MathF.Abs(velocity.X * 1.3f), 250);
         velocity.Y += addYVelocity;
-        bounce.Play(1, Random.Range(0.75f, 1f), 0);
+        bounce.Play();
     }
 
     /// <summary>

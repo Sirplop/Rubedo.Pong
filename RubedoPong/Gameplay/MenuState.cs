@@ -1,9 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Rubedo;
-using Rubedo.Components;
-using Rubedo.Internal.Assets;
-using Rubedo.Object;
+using Rubedo.Graphics.Viewports;
+using Rubedo.Graphics;
 using Rubedo.UI;
 using Rubedo.UI.Graphics;
 using Rubedo.UI.Input;
@@ -25,19 +23,24 @@ public class MenuState : GameState
     public override void LoadContent()
     {
         base.LoadContent();
-        //AssetManager.CreateNewFontSystem("default", "fonts/Consolas.ttf");
-        AssetManager.CreateNewFontSystem("default", "fonts/DroidSans.ttf", "fonts/DroidSansJapanese.ttf", "fonts/Symbola-Emoji.ttf");
+        Assets.CreateNewFontSystem("default", "fonts/DroidSans.ttf", "fonts/DroidSansJapanese.ttf", "fonts/Symbola-Emoji.ttf");
     }
-
     public override void Enter()
     {
         base.Enter();
+
+        GUI.Root = new GUIRoot(new Point(800, 480), true);
+        Renderables.Add(GUI.Root);
+
+        Camera camera = new Camera(this, new BestFitViewport(RubedoEngine.Instance.GraphicsDevice, RubedoEngine.Instance.Window, 800, 480), 0);
+        camera.RenderLayers.Add((int)Rubedo.Graphics.Sprites.RenderLayer.Default);
+        camera.RenderLayers.Add((int)Rubedo.Graphics.Sprites.RenderLayer.UI);
 
         //button layout group.
         Vertical vert = new Vertical();
         vert.Anchor = Rubedo.UI.Anchor.Center;
 
-        Label titleText = new Label(AssetManager.GetFontSystem("default"), "RUBEDO PONG", Color.White, 72);
+        Label titleText = new Label(Assets.GetFontSystem("default"), "RUBEDO PONG", Color.White, 72);
         titleText.Anchor = Anchor.Top;
         vert.AddChild(titleText);
 
@@ -45,10 +48,10 @@ public class MenuState : GameState
         vert.AddChild(spacer);
 
         Button startButton = new Button();
-        Image startImage = new Image(AssetManager.LoadTexture("button"), Color.White);
+        Image startImage = new Image(Assets.LoadTexture("button"), Color.White);
         startButton.AddChild(new SelectableTintSet(startImage));
         startButton.AddChild(startImage);
-        Label startText = new Label(AssetManager.GetFontSystem("default"), "Play", Color.Black, 24);
+        Label startText = new Label(Assets.GetFontSystem("default"), "Play", Color.Black, 24);
         startText.Anchor = Anchor.Center;
         startImage.AddChild(startText);
         startButton.OnReleased += (b) => stateManager.SwitchState("PongState");
@@ -56,10 +59,10 @@ public class MenuState : GameState
         vert.AddChild(startButton);
 
         Button quitButton = new Button();
-        Image quitImage = new Image(AssetManager.LoadTexture("button"));
+        Image quitImage = new Image(Assets.LoadTexture("button"));
         quitButton.AddChild(new SelectableTintSet(quitImage));
         quitButton.AddChild(quitImage);
-        Label quitText = new Label(AssetManager.GetFontSystem("default"), "Quit", Color.Black, 24);
+        Label quitText = new Label(Assets.GetFontSystem("default"), "Quit", Color.Black, 24);
         quitText.Anchor = Anchor.Center;
         quitImage.AddChild(quitText);
         quitButton.OnReleased += (b) => Pong.Instance.Exit();

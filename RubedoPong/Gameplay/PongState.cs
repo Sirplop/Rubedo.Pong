@@ -3,11 +3,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Rubedo;
 using Rubedo.Components;
+using Rubedo.Graphics.Viewports;
+using Rubedo.Graphics;
 using Rubedo.Input.Conditions;
-using Rubedo.Internal.Assets;
 using Rubedo.Object;
 using Rubedo.UI;
 using Rubedo.UI.Text;
+using Rubedo.Lib;
+using Rubedo.Audio;
 
 namespace RubedoPong.Gameplay;
 
@@ -35,8 +38,8 @@ public class PongState : GameState
     private bool roundStarted;
     private bool gameWon;
 
-    private SoundEffect score;
-    private SoundEffect oppScore;
+    private SoundPlayer scoreSound;
+    private SoundPlayer oppSound;
 
     private readonly KeyCondition quitInput = new KeyCondition(Microsoft.Xna.Framework.Input.Keys.Escape);
     private readonly KeyCondition sendInput = new KeyCondition(Microsoft.Xna.Framework.Input.Keys.Space);
@@ -49,19 +52,28 @@ public class PongState : GameState
     public override void LoadContent()
     {
         base.LoadContent();
-        score = AssetManager.LoadSoundEffect("score");
-        oppScore = AssetManager.LoadSoundEffect("opponent_score");
+        scoreSound = new SoundPlayer("score", (int)DefaultMixers.Type.Effect, 1, RubedoEngine.Audio);
+        oppSound = new SoundPlayer("opponent_score", (int)DefaultMixers.Type.Effect, 1, RubedoEngine.Audio);
     }
 
     public override void Enter()
     {
         base.Enter();
+        Renderables.Add(GUI.Root);
+        RubedoEngine.Instance.Renderer.GlobalScale = 1f;
+
+        Camera camera = new Camera(this, new BestFitViewport(RubedoEngine.Instance.GraphicsDevice, RubedoEngine.Instance.Window, 800, 480), 0);
+        camera.RenderLayers.Add((int)Rubedo.Graphics.Sprites.RenderLayer.Default);
+        camera.RenderLayers.Add((int)Rubedo.Graphics.Sprites.RenderLayer.UI);
+        //camera.SetZoomToUnitHeight(20);
 
         playerSendsBall = true;
         roundStarted = true;
         gameWon = false;
 
-        Pong.Instance.Camera.GetExtents(out float left, out float right, out float top, out float bottom);
+        RectF cameraView = camera.ViewRect;
+        cameraView.GetExtents(out float left, out float right, out float top, out float bottom);
+
         rightStart = new Vector2(right - 24, 0);
         leftStart = new Vector2(left + 24, 0);
 
@@ -98,17 +110,15 @@ public class PongState : GameState
         };
         Add(paddleEnt);
 
-        FontSystem font = AssetManager.GetFontSystem("default");
+        FontSystem font = Assets.GetFontSystem("default");
         leftScoreText = new Label(font, "0", Color.White, 36);
         leftScoreText.horizontalAlignment = Label.HorizontalAlignment.Center;
-        leftScoreText.Anchor = Anchor.Top;
-        leftScoreText.SetScreenOffset(new Vector2(0.25f, 0.02f));
+        leftScoreText.SetAnchorAndOffset(Anchor.Top, new Vector2(800 * -0.25f, 480 * 0.02f));
         GUI.Root.AddChild(leftScoreText);
 
         rightScoreText = new Label(font, "0", Color.White, 36);
         rightScoreText.horizontalAlignment = Label.HorizontalAlignment.Center;
-        rightScoreText.Anchor = Anchor.Top;
-        rightScoreText.SetScreenOffset(new Vector2(0.75f, 0.02f));
+        rightScoreText.SetAnchorAndOffset(Anchor.Top, new Vector2(800 * 0.25f, 480 * 0.02f));
         GUI.Root.AddChild(rightScoreText);
     }
 
@@ -150,19 +160,19 @@ public class PongState : GameState
         if (leftOrRight)
         {
             rightScore++;
-            score.Play();
+            scoreSound.Play();
         }
         else
         {
             leftScore++;
-            oppScore.Play();
+            oppSound.Play();
         }
 
         ball.Transform.Position = Vector2.Zero;
         ball.velocity = Vector2.Zero;
 
-        ball.active = false;
-        ball.sprite.visible = false;
+        ball.Active = false;
+        ball.sprite.Visible = false;
 
         playerSendsBall = !leftOrRight;
         roundCooldown = 2;
@@ -171,7 +181,7 @@ public class PongState : GameState
         if (leftScore >= scoreToWin)
         { //left player wins
             roundCooldown = 4;
-            FontSystem font = AssetManager.GetFontSystem("default");
+            FontSystem font = Assets.GetFontSystem("default");
             Label winText = new Label(font, "Left Player Wins!", Color.Red, 56);
             winText.horizontalAlignment = Label.HorizontalAlignment.Center;
             winText.Anchor = Anchor.Center;
@@ -182,7 +192,7 @@ public class PongState : GameState
         else if (rightScore >= scoreToWin)
         { //right player wins.
             roundCooldown = 4;
-            FontSystem font = AssetManager.GetFontSystem("default");
+            FontSystem font = Assets.GetFontSystem("default");
             Label winText = new Label(font, "Right Player Wins!", Color.Green, 56);
             winText.horizontalAlignment = Label.HorizontalAlignment.Center;
             winText.Anchor = Anchor.Center;
@@ -207,7 +217,7 @@ public class PongState : GameState
 
         if (gameWon && roundCooldown > 0)
         {
-            roundCooldown -= Pong.DeltaTime;
+            roundCooldown -= Time.DeltaTime;
             if (roundCooldown <= 0)
             {
                 this.stateManager.SwitchState("MenuState");
@@ -217,13 +227,13 @@ public class PongState : GameState
 
         if (roundCooldown > 0)
         {
-            roundCooldown -= Pong.DeltaTime;
+            roundCooldown -= Time.DeltaTime;
             if (roundCooldown <= 0)
             {
                 roundCooldown = 0;
                 roundStarted = true;
-                ball.sprite.visible = true;
-                ball.active = true;
+                ball.sprite.Visible = true;
+                ball.Active = true;
                 leftPlayer.Transform.Position = leftStart;
                 rightPlayer.Transform.Position = rightStart;
                 leftPlayer.velocity = 0;

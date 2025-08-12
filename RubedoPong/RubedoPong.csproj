@@ -33,13 +33,16 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Learninging\Rubedo\Rubedo.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="Content\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
   <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
     <Message Text="Restoring dotnet tools" Importance="High" />
     <Exec Command="dotnet tool restore" />
   </Target>
+
+  <Target Name="BuildContent" AfterTargets="PostBuildEvent">
+    <Exec Command="Rubedo.Compiler.exe $(ProjectDir) $(TargetDir) textures" WorkingDirectory="$(ProjectDir)\ContentBuilder" />
+  </Target>
+
+  <PropertyGroup>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
 </Project>

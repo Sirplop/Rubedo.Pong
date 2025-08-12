@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using Rubedo;
 using Rubedo.Components;
 using Rubedo.Input.Conditions;
 using Rubedo.Object;
@@ -34,7 +35,7 @@ public class Paddle : Component
             new KeyCondition(Keys.S)
         );
 
-    public Paddle(Ball ball) : base(true, true) 
+    public Paddle(Ball ball)
     {
         target = ball;
     }
@@ -48,14 +49,19 @@ public class Paddle : Component
 
         halfHeight = paddleSprite.Height * 0.5f;
         halfWidth = paddleSprite.Width * 0.5f;
-        Pong.Instance.Camera.GetExtents(out _, out _, out top, out bottom);
+    }
+
+    public override void EntityAdded(GameState state)
+    {
+        base.EntityAdded(state);
+        state.MainCamera.ViewRect.GetExtents(out _, out _, out top, out bottom);
     }
 
     public override void Update()
     {
         base.Update();
 
-        Vector2 pos = compTransform.Position;
+        Vector2 pos = Transform.Position;
         float Y;
         if (isPlayer)
         {
@@ -63,19 +69,19 @@ public class Paddle : Component
             bool upPressed = upInput.Pressed() || upInput.Held();
             if (downPressed && !upPressed)
             {
-                velocity -= moveRate * Pong.DeltaTime;
+                velocity -= moveRate * Time.DeltaTime;
             }
             else if (upPressed && !downPressed)
             {
-                velocity += moveRate * Pong.DeltaTime;
+                velocity += moveRate * Time.DeltaTime;
             }
             Rubedo.Lib.Math.Clamp(velocity, -20, 20);
         }
         else
         {
-            if (target.active)
+            if (target.Active)
             {
-                Y = moveRate * Pong.DeltaTime;
+                Y = moveRate * Time.DeltaTime;
                 Vector2 ballPos = target.Transform.Position;
                 if (pos.Y >= ballPos.Y)
                     Y = -Y;
